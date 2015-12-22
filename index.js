@@ -4,55 +4,34 @@ var koa = require('koa');
 var router = require('koa-router')();
 var app = koa();
 
-var nsqueue = require('nsqueue');
-
-var nsq = require('nsq.js');
+var nsq = require('nsqjs');
 
 
-var reader = nsq.reader({
-  nsqd: ['http://120.24.210.90:4151'],
-  maxInFlight: 1,
-  maxAttempts: 5,
-  topic: 'events',
-  channel: 'ingestion'
+// var reader = new nsq.Reader('topic', 'test', {
+//   lookupdHTTPAddresses: '120.24.210.90:4150'
+// });
+
+
+
+var reader = new nsq.Reader('topic', 'test', {
+  lookupdHTTPAddresses: '120.24.210.90:4161'
 });
 
-reader.on('error', function(err){
-  console.log(err.stack);
-});
+reader.connect();
 
-reader.on('message', function(msg){
-  var body = msg.body.toString();
-  console.log('%s attempts=%s', body, msg.attempts);
-  msg.requeue(2000);
-});
-
-reader.on('discard', function(msg){
-  var body = msg.body.toString();
-  console.log('giving up on %s', body);
+reader.on('message', function (msg) {
+  console.log('Received message [%s]: %s', msg.id, msg.body.toString());
   msg.finish();
 });
 
-// publish
 
-var writer = nsq.writer(':4150');
+request.post({
+		url:'http://120.24.210.90:4151/put?topic=test', 
+		form: {topic:'test'}
+		}, function(err,httpResponse,body){ 
+			console.info(body);
+})
 
-writer.on('ready', function() {
-  writer.publish('events', 'foo');
-  writer.publish('events', 'bar');
-  writer.publish('events', 'baz');
-});
-
-app.use(function *(){
-	
-  request.put({
- 		url:'http://120.24.210.90:4151/put?topic=test', 
- 		form: {topic:'ssss'}
- 		}, function(err,httpResponse,body){ 
- 			console.info(body);
-  })
-  this.body = 'aps';
-});
 
 // app.use(function *(next){
 // 	request.post({
@@ -66,10 +45,10 @@ app.use(function *(){
 // response 
  
 // app.use(function *(){
-//   this.body = 'Hello World';
+//   this.body = '/';
 // });
  
-app.listen(3030);
+// app.listen(3030);
 
-console.log("3030")
+// console.log("3030")
 
