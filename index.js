@@ -1,8 +1,13 @@
+
+var http = require('http');
 var request = require('request');
 
 var koa = require('koa');
 var router = require('koa-router')();
 var app = koa();
+
+var fs = require('fs');
+var path = require('path');
 
 var nsq = require('nsqjs');
 
@@ -12,25 +17,52 @@ var nsq = require('nsqjs');
 // });
 
 
+var spawn = require('child_process').spawn;
 
-request({
-    method: 'post',
-    preambleCRLF: true,
-    postambleCRLF: true,
-    uri: 'http://120.24.210.90:4151/put?topic=test',
-    multipart: [
-      {       
-        body: 'I am nodejs request messages'
-      }      
-    ]
-  },
-  function (error, response, body) {
-    if (error) {
-      return console.error('upload failed:', error);
-    }
-    console.log('Upload successful!  Server responded with:', body);
-})
 
+
+
+
+// request({
+//     method: 'post',
+//     preambleCRLF: true,
+//     postambleCRLF: true,
+//     uri: 'http://120.24.210.90:4151/put?topic=test',
+//     multipart: [
+//       {       
+//         body: 'I am nodejs request messages'
+//       }      
+//     ]
+//   },
+//   function (error, response, body) {
+//     if (error) {
+//       return console.error('upload failed:', error);
+//     }
+//     console.log('Upload successful!  Server responded with:', body);
+// })
+
+fs.mkdir(__dirname + '/fsDir', function (err) {
+
+          if(err)
+
+              throw err;
+
+          console.log('创建目录成功')
+
+});
+
+ var options={
+    hostname:'120.24.210.90',
+    port:4151,
+    method:'POST',
+    path:'/put?topic=test'
+};
+
+var creq=http.request(options,function(response){
+	console.log('Upload successful!  Server responded with:',  __dirname);
+});
+creq.write('I am nodejs request messages');
+creq.end();
 
 
 
@@ -102,3 +134,37 @@ request({
 
 // console.log("3030")
 
+
+
+
+//创建多层文件夹 异步
+function mkdirs(dirpath, mode, callback) {
+    callback = callback ||
+    function() {};
+
+    fs.exists(dirpath,
+    function(exitsmain) {
+        if (!exitsmain) {
+            //目录不存在
+            var pathtmp;
+            var pathlist = dirpath.split(path.sep);
+            var pathlistlength = pathlist.length;
+            var pathlistlengthseed = 0;
+
+            mkdir_auto_next(mode, pathlist, pathlist.length,
+            function(callresult) {
+                if (callresult) {
+                    callback(true);
+                }
+                else {
+                    callback(false);
+                }
+            });
+
+        }
+        else {
+            callback(true);
+        }
+
+    });
+}
